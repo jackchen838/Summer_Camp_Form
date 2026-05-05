@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>佛法夏令營 - 學生用藥表單</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>佛法夏令營學生用藥情況表單</h1>
+
+    <section class="card">
+      <div class="grid">
+        <label>班級
+          <select id="classSelect">
+            <option value="">請選擇班級</option>
+            {% for c in classes %}
+            <option value="{{ c }}">{{ c }}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label>學生
+          <select id="studentSelect" disabled>
+            <option value="">請先選班級</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row-between">
+        <h2>用藥資料</h2>
+        <button type="button" id="addMedBtn">+ 新增藥品</button>
+      </div>
+      <div id="medicineList"></div>
+      <button type="button" id="submitBtn" class="submit">送出表單</button>
+      <p id="msg"></p>
+    </section>
+  </main>
+<script src="/static/app.js"></script>
+</body>
+</html>
