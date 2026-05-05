@@ -1,19 +1,8 @@
-<<<<<<< codex/create-student-medication-form-with-html-rwd-ofvjvc
-FROM python:3.10
-
-WORKDIR /app
-
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-
-COPY . .
-
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "main:app"]
-=======
-FROM python:3.11-slim
+FROM python:3.10-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PORT=8080
 
 WORKDIR /app
 
@@ -22,8 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-ENV PORT=8080
 EXPOSE 8080
 
-CMD ["gunicorn", "--bind", ":8080", "main:app"]
->>>>>>> main
+# Use shell form so $PORT is expanded correctly in all environments
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT} main:app"]
