@@ -55,8 +55,8 @@ def index():
     conn = get_conn()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT DISTINCT class FROM student ORDER BY class")
-            classes = [row["class"] for row in cur.fetchall()]
+            cur.execute("SELECT DISTINCT className FROM student ORDER BY className")
+            classes = [row["className"] for row in cur.fetchall()]
         return render_template("index.html", classes=classes)
     finally:
         conn.close()
@@ -72,7 +72,7 @@ def get_students():
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id, name FROM student WHERE class=%s ORDER BY name",
+                "SELECT id, name FROM student WHERE className=%s ORDER BY name",
                 (class_name,),
             )
             rows = cur.fetchall()
@@ -115,7 +115,7 @@ def submit():
         ensure_table(conn)
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id FROM student WHERE id=%s AND class=%s",
+                "SELECT id FROM student WHERE id=%s AND className=%s",
                 (student_id, class_name),
             )
             student = cur.fetchone()
