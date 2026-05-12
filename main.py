@@ -6,13 +6,23 @@ from datetime import date
 app = Flask(__name__)
 
 
+REQUIRED_DB_ENV_VARS = ("DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME")
+
+
+def get_required_env(name):
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(f"Missing required environment variable: {name}")
+    return value
+
+
 def get_conn():
     return pymysql.connect(
-        host=os.getenv("DB_HOST", "34.80.79.201"),
+        host=get_required_env("DB_HOST"),
         port=int(os.getenv("DB_PORT", "3306")),
-        user=os.getenv("DB_USER", "jingshe"),
-        password=os.getenv("DB_PASSWORD", "Saint0926"),
-        database=os.getenv("DB_NAME", "camp"),
+        user=get_required_env("DB_USER"),
+        password=get_required_env("DB_PASSWORD"),
+        database=get_required_env("DB_NAME"),
         charset="utf8mb4",
         cursorclass=pymysql.cursors.DictCursor,
         autocommit=False,
@@ -45,8 +55,8 @@ def index():
     conn = get_conn()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT DISTINCT class FROM student ORDER BY class")
-            classes = [row["class"] for row in cur.fetchall()]
+            cur.execute("SELECT DISTINCT className FROM student ORDER BY className")
+            classes = [row["className"] for row in cur.fetchall()]
         return render_template("index.html", classes=classes)
     finally:
         conn.close()
@@ -62,7 +72,7 @@ def get_students():
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id, name FROM student WHERE class=%s ORDER BY name",
+                "SELECT id, name FROM student WHERE className=%s ORDER BY name",
                 (class_name,),
             )
             rows = cur.fetchall()
@@ -105,7 +115,7 @@ def submit():
         ensure_table(conn)
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id FROM student WHERE id=%s AND class=%s",
+                "SELECT id FROM student WHERE id=%s AND className=%s",
                 (student_id, class_name),
             )
             student = cur.fetchone()

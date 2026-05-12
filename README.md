@@ -18,13 +18,26 @@ your-repo/
 - 進入點：`gunicorn --bind :$PORT main:app`
 - 函式目標：留白（這不是 Cloud Functions）
 
-## 必要環境變數
-請在 Cloud Run 服務設定：
+## 環境變數與 Secret
+部署到 Cloud Run 時，不需要把 `.env` 上傳到 GitHub，也不建議把資料庫密碼寫進程式或 Docker image。
+
+建議做法：
+1. 本機開發可以複製 `.env.example` 成 `.env`。
+2. `.env` 只留在本機，已由 `.gitignore` 排除。
+3. Cloud Run 請到服務設定的「變數與密鑰」填入環境變數。
+4. `DB_PASSWORD` 建議放在 Secret Manager，再掛到 Cloud Run 環境變數。
+
+必要環境變數：
 - `DB_HOST`
 - `DB_PORT`（預設 3306）
 - `DB_USER`
 - `DB_PASSWORD`
 - `DB_NAME`
+
+## Cloud Run 注意事項
+- Container 必須監聽 Cloud Run 指定的 `PORT`，目前 Dockerfile 會用 `gunicorn --bind 0.0.0.0:${PORT} main:app` 啟動。
+- 如果使用 Cloud SQL，請確認 Cloud Run 有連到 Cloud SQL 的權限與網路設定。
+- 不要把 `.env`、資料庫密碼或服務帳號金鑰 commit 到 GitHub。
 
 ## Local run
 ```bash
