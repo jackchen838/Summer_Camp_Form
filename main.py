@@ -6,13 +6,23 @@ from datetime import date
 app = Flask(__name__)
 
 
+REQUIRED_DB_ENV_VARS = ("DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME")
+
+
+def get_required_env(name):
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(f"Missing required environment variable: {name}")
+    return value
+
+
 def get_conn():
     return pymysql.connect(
-        host=os.getenv("DB_HOST", "34.80.79.201"),
+        host=get_required_env("DB_HOST"),
         port=int(os.getenv("DB_PORT", "3306")),
-        user=os.getenv("DB_USER", "jingshe"),
-        password=os.getenv("DB_PASSWORD", "Saint0926"),
-        database=os.getenv("DB_NAME", "camp"),
+        user=get_required_env("DB_USER"),
+        password=get_required_env("DB_PASSWORD"),
+        database=get_required_env("DB_NAME"),
         charset="utf8mb4",
         cursorclass=pymysql.cursors.DictCursor,
         autocommit=False,
