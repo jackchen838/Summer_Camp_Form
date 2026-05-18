@@ -11,6 +11,23 @@ def is_blank(value):
 
 
 REQUIRED_DB_ENV_VARS = ("DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME")
+CLASS_ORDER = ("布施", "持戒", "忍辱", "精進", "禪定", "般若")
+CLASS_ORDER_INDEX = {class_name: index for index, class_name in enumerate(CLASS_ORDER)}
+
+
+def class_sort_key(class_name):
+    normalized_class_name = (class_name or '').strip().strip('"')
+    return (
+        CLASS_ORDER_INDEX.get(normalized_class_name, len(CLASS_ORDER)),
+        normalized_class_name,
+    )
+
+
+def get_class_names(conn):
+    with conn.cursor() as cur:
+        cur.execute("SELECT DISTINCT className FROM student")
+        classes = [row["className"] for row in cur.fetchall()]
+    return sorted(classes, key=class_sort_key)
 
 
 def get_required_env(name):
