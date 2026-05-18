@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% set active_page = 'parent_contact' %}
+{% block title %}佛法夏令營 — 家長聯絡登記{% endblock %}
+{% block page_id %}parent-contact{% endblock %}
+{% block heading %}家長聯絡登記{% endblock %}
+{% block footer_note %}請選擇家長需要聯絡或到營區關懷的日期{% endblock %}
+{% block content %}
+  <section class="card">
+    <div class="card-header">
+      <h2>填寫家長聯絡資料</h2>
+      <span class="card-hint">請先選擇班級與學生，再勾選日期</span>
+    </div>
+
+    <div class="card-body">
+      <div class="selector-row">
+        <div class="field-group">
+          <label for="classSelect">班　級</label>
+          <select id="classSelect">
+            <option value="">請選擇班級</option>
+            {% for c in classes %}
+            <option value="{{ c }}">{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label for="studentSelect">學　生</label>
+          <select id="studentSelect" disabled>
+            <option value="">請先選班級</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <p class="contact-label">家長聯絡日期</p>
+      <div class="contact-panel">
+        <span class="field-label">請勾選 7/3(五)～7/5(日) 需要聯絡的日期</span>
+        <div class="days-row" id="contactDays">
+          <label class="day-chip">
+            <input type="checkbox" value="2026-07-03" />
+            <span>7/3（五）</span>
+          </label>
+          <label class="day-chip">
+            <input type="checkbox" value="2026-07-04" />
+            <span>7/4（六）</span>
+          </label>
+          <label class="day-chip">
+            <input type="checkbox" value="2026-07-05" />
+            <span>7/5（日）</span>
+          </label>
+        </div>
+
+        <div class="field-group">
+          <label for="parentNote">備　註</label>
+          <textarea id="parentNote" maxlength="1000" placeholder="例如：希望於晚間聯絡、家長姓名與電話、需提醒事項…"></textarea>
+        </div>
+      </div>
+
+      <button type="button" id="parentSubmitBtn" class="submit"><span aria-hidden="true">🙏</span> 送出登記</button>
+      <p id="msg" class="msg" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+{% endblock %}
