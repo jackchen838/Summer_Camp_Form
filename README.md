@@ -54,5 +54,5 @@ mysql -h <DB_HOST> -u <DB_USER> -p <DB_NAME> < sql/create_parent_contact_registr
 
 主要欄位：
 - `student_id`：對應 `student.id`。
-- `contact_0703`、`contact_0704`、`contact_0705`：家長聯絡登記日期。
-- `note`：家長聯絡備註。
+- `contact_0702`、`contact_0703`、`contact_0704`：家長聯絡登記日期（晚間 7:00～9:30）。
+- `note`：聯絡哪位家長（爸爸或媽媽）、撥打行動或市話；若孩子沒有記電話，可補充電話。

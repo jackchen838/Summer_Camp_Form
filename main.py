@@ -62,15 +62,15 @@ def ensure_parent_contact_table(conn):
                 id BIGINT AUTO_INCREMENT PRIMARY KEY,
                 student_id INT NOT NULL,
                 event_year SMALLINT NOT NULL DEFAULT 2026,
+                contact_0702 BOOLEAN NOT NULL DEFAULT FALSE,
                 contact_0703 BOOLEAN NOT NULL DEFAULT FALSE,
                 contact_0704 BOOLEAN NOT NULL DEFAULT FALSE,
-                contact_0705 BOOLEAN NOT NULL DEFAULT FALSE,
                 note VARCHAR(1000) DEFAULT '',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 UNIQUE KEY uq_student_event_year (student_id, event_year),
                 INDEX idx_parent_contact_student_id (student_id),
-                INDEX idx_parent_contact_days (contact_0703, contact_0704, contact_0705),
+                INDEX idx_parent_contact_days (contact_0702, contact_0703, contact_0704),
                 CONSTRAINT fk_parent_contact_student
                     FOREIGN KEY (student_id) REFERENCES student(id)
                     ON UPDATE CASCADE
@@ -78,6 +78,23 @@ def ensure_parent_contact_table(conn):
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             """
         )
+        cur.execute(
+            """
+            SELECT COUNT(*) AS count
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'parent_contact_registrations'
+              AND COLUMN_NAME = 'contact_0702'
+            """
+        )
+        if cur.fetchone()['count'] == 0:
+            cur.execute(
+                """
+                ALTER TABLE parent_contact_registrations
+                ADD COLUMN contact_0702 BOOLEAN NOT NULL DEFAULT FALSE
+                    AFTER event_year
+                """
+            )
 
 
 @app.get("/")
@@ -209,7 +226,7 @@ def submit_parent_contact():
     contact_days = set(payload.get('contact_days', []))
     note = (payload.get('note') or '').strip()
 
-    allowed_days = {'2026-07-03', '2026-07-04', '2026-07-05'}
+    allowed_days = {'2026-07-02', '2026-07-03', '2026-07-04'}
     invalid_days = contact_days - allowed_days
 
     if not class_name or is_blank(student_id):
@@ -237,20 +254,20 @@ def submit_parent_contact():
             cur.execute(
                 """
                 INSERT INTO parent_contact_registrations
-                    (student_id, event_year, contact_0703, contact_0704, contact_0705, note)
+                    (student_id, event_year, contact_0702, contact_0703, contact_0704, note)
                 VALUES (%s, %s, %s, %s, %s, %s)
                 ON DUPLICATE KEY UPDATE
+                    contact_0702=VALUES(contact_0702),
                     contact_0703=VALUES(contact_0703),
                     contact_0704=VALUES(contact_0704),
-                    contact_0705=VALUES(contact_0705),
                     note=VALUES(note)
                 """,
                 (
                     student_id,
                     2026,
+                    '2026-07-02' in contact_days,
                     '2026-07-03' in contact_days,
                     '2026-07-04' in contact_days,
-                    '2026-07-05' in contact_days,
                     note,
                 ),
             )
