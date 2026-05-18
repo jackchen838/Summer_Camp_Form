@@ -10,6 +10,18 @@ function setMessage(text, ok) {
   msg.classList.toggle('error', !ok);
 }
 
+function getSelectedStudentId() {
+  return studentSelect ? studentSelect.value.trim() : '';
+}
+
+function hasClassAndStudent() {
+  if (!classSelect.value || !getSelectedStudentId()) {
+    setMessage('請先選擇班級與學生', false);
+    return false;
+  }
+  return true;
+}
+
 async function loadStudents() {
   const className = classSelect.value;
   studentSelect.innerHTML = '<option value="">載入中...</option>';
@@ -88,6 +100,8 @@ function setupMedicinePage() {
   addMedicine();
 
   submitBtn.addEventListener('click', async () => {
+    if (!hasClassAndStudent()) return;
+
     const meds = Array.from(document.querySelectorAll('.med-item')).map((item) => ({
       name: item.querySelector('.med-name').value,
       note: item.querySelector('.med-note').value,
@@ -96,7 +110,7 @@ function setupMedicinePage() {
 
     const payload = {
       class_name: classSelect.value,
-      student_id: Number(studentSelect.value),
+      student_id: getSelectedStudentId(),
       medicines: meds,
     };
 
@@ -119,12 +133,14 @@ function setupParentContactPage() {
   const parentNote = document.getElementById('parentNote');
 
   submitBtn.addEventListener('click', async () => {
+    if (!hasClassAndStudent()) return;
+
     const selectedDays = Array.from(document.querySelectorAll('#contactDays input[type="checkbox"]:checked'))
       .map((checkbox) => checkbox.value);
 
     const payload = {
       class_name: classSelect.value,
-      student_id: Number(studentSelect.value),
+      student_id: getSelectedStudentId(),
       contact_days: selectedDays,
       note: parentNote.value,
     };

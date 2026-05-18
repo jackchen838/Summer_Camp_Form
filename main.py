@@ -6,6 +6,10 @@ from datetime import date
 app = Flask(__name__)
 
 
+def is_blank(value):
+    return value is None or str(value).strip() == ''
+
+
 REQUIRED_DB_ENV_VARS = ("DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME")
 
 
@@ -127,7 +131,7 @@ def submit():
     student_id = payload.get('student_id')
     medicines = payload.get('medicines', [])
 
-    if not class_name or not student_id:
+    if not class_name or is_blank(student_id):
         return jsonify({"ok": False, "message": "班級或學生未填寫"}), 400
 
     valid_meds = []
@@ -208,7 +212,7 @@ def submit_parent_contact():
     allowed_days = {'2026-07-03', '2026-07-04', '2026-07-05'}
     invalid_days = contact_days - allowed_days
 
-    if not class_name or not student_id:
+    if not class_name or is_blank(student_id):
         return jsonify({"ok": False, "message": "班級或學生未填寫"}), 400
 
     if invalid_days:
