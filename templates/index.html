@@ -1,44 +1,44 @@
-<!doctype html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>佛法夏令營 - 學生用藥表單</title>
-  <link rel="stylesheet" href="/static/style.css" />
-</head>
-<body>
-  <main class="container">
-    <h1>佛法夏令營學生用藥情況表單</h1>
+{% extends "base.html" %}
+{% set active_page = 'medicine' %}
+{% block title %}佛法夏令營 — 學生用藥情況表單{% endblock %}
+{% block page_id %}medicine{% endblock %}
+{% block heading %}學生用藥情況表單{% endblock %}
+{% block footer_note %}如有用藥或健康疑慮，請主動告知醫護組{% endblock %}
+{% block content %}
+  <section class="card">
+    <div class="card-header">
+      <h2>填寫用藥資料</h2>
+      <span class="card-hint">請詳細填寫，以便醫護人員照護</span>
+    </div>
 
-    <section class="card">
-      <div class="grid">
-        <label>班級
+    <div class="card-body">
+      <div class="selector-row">
+        <div class="field-group">
+          <label for="classSelect">班　級</label>
           <select id="classSelect">
             <option value="">請選擇班級</option>
             {% for c in classes %}
             <option value="{{ c }}">{{ c }}</option>
             {% endfor %}
           </select>
-        </label>
+        </div>
 
-        <label>學生
+        <div class="field-group">
+          <label for="studentSelect">學　生</label>
           <select id="studentSelect" disabled>
             <option value="">請先選班級</option>
           </select>
-        </label>
+        </div>
       </div>
-    </section>
 
-    <section class="card">
-      <div class="row-between">
-        <h2>用藥資料</h2>
-        <button type="button" id="addMedBtn">+ 新增藥品</button>
-      </div>
+      <div class="section-divider"></div>
+
+      <p class="meds-label">用藥資料</p>
       <div id="medicineList"></div>
-      <button type="button" id="submitBtn" class="submit">送出表單</button>
-      <p id="msg"></p>
-    </section>
-  </main>
-<script src="/static/app.js"></script>
-</body>
-</html>
+
+      <button type="button" id="addMedBtn">＋ 新增藥品</button>
+      <button type="button" id="submitBtn" class="submit"><span aria-hidden="true">🙏</span> 送出表單</button>
+      <p id="msg" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+{% endblock %}
