@@ -12,10 +12,22 @@ def is_blank(value):
 
 REQUIRED_DB_ENV_VARS = ("DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME")
 CLASS_ORDER = ("布施", "持戒", "忍辱", "精進", "禪定", "般若")
-CLASS_ORDER_SQL = "CASE className " + " ".join(
-    f"WHEN '{class_name}' THEN {index}"
-    for index, class_name in enumerate(CLASS_ORDER, start=1)
-) + " ELSE 999 END, className"
+CLASS_ORDER_INDEX = {class_name: index for index, class_name in enumerate(CLASS_ORDER)}
+
+
+def class_sort_key(class_name):
+    normalized_class_name = (class_name or '').strip().strip('"')
+    return (
+        CLASS_ORDER_INDEX.get(normalized_class_name, len(CLASS_ORDER)),
+        normalized_class_name,
+    )
+
+
+def get_class_names(conn):
+    with conn.cursor() as cur:
+        cur.execute("SELECT DISTINCT className FROM student")
+        classes = [row["className"] for row in cur.fetchall()]
+    return sorted(classes, key=class_sort_key)
 
 
 def get_required_env(name):
@@ -106,9 +118,7 @@ def ensure_parent_contact_table(conn):
 def index():
     conn = get_conn()
     try:
-        with conn.cursor() as cur:
-            cur.execute(f"SELECT DISTINCT className FROM student ORDER BY {CLASS_ORDER_SQL}")
-            classes = [row["className"] for row in cur.fetchall()]
+        classes = get_class_names(conn)
         return render_template("index.html", classes=classes)
     finally:
         conn.close()
@@ -118,9 +128,7 @@ def index():
 def parent_contact():
     conn = get_conn()
     try:
-        with conn.cursor() as cur:
-            cur.execute(f"SELECT DISTINCT className FROM student ORDER BY {CLASS_ORDER_SQL}")
-            classes = [row["className"] for row in cur.fetchall()]
+        classes = get_class_names(conn)
         return render_template("parent_contact.html", classes=classes)
     finally:
         conn.close()
