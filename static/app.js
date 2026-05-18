@@ -2,6 +2,25 @@ const page = document.body.dataset.page;
 const classSelect = document.getElementById('classSelect');
 const studentSelect = document.getElementById('studentSelect');
 const msg = document.getElementById('msg');
+const CLASS_OPTIONS = ['布施', '持戒', '忍辱', '精進', '禪定', '般若'];
+
+function populateClassOptions() {
+  if (!classSelect) return;
+
+  const selectedClass = classSelect.value;
+  classSelect.innerHTML = '<option value="">請選擇班級</option>';
+
+  CLASS_OPTIONS.forEach((className) => {
+    const option = document.createElement('option');
+    option.value = className;
+    option.textContent = className;
+    classSelect.appendChild(option);
+  });
+
+  if (CLASS_OPTIONS.includes(selectedClass)) {
+    classSelect.value = selectedClass;
+  }
+}
 
 function setMessage(text, ok) {
   if (!msg) return;
@@ -48,6 +67,8 @@ async function loadStudents() {
     setMessage('學生資料載入失敗，請稍後再試', false);
   }
 }
+
+populateClassOptions();
 
 if (classSelect && studentSelect) {
   classSelect.addEventListener('change', loadStudents);

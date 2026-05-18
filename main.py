@@ -116,22 +116,12 @@ def ensure_parent_contact_table(conn):
 
 @app.get("/")
 def index():
-    conn = get_conn()
-    try:
-        classes = get_class_names(conn)
-        return render_template("index.html", classes=classes)
-    finally:
-        conn.close()
+    return render_template("index.html")
 
 
 @app.get('/parent-contact')
 def parent_contact():
-    conn = get_conn()
-    try:
-        classes = get_class_names(conn)
-        return render_template("parent_contact.html", classes=classes)
-    finally:
-        conn.close()
+    return render_template("parent_contact.html")
 
 
 @app.get('/api/students')
