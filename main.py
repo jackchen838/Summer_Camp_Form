@@ -99,26 +99,12 @@ def ensure_parent_contact_table(conn):
 
 @app.get("/")
 def index():
-    conn = get_conn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("SELECT DISTINCT className FROM student ORDER BY className")
-            classes = [row["className"] for row in cur.fetchall()]
-        return render_template("index.html", classes=classes)
-    finally:
-        conn.close()
+    return render_template("index.html")
 
 
 @app.get('/parent-contact')
 def parent_contact():
-    conn = get_conn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("SELECT DISTINCT className FROM student ORDER BY className")
-            classes = [row["className"] for row in cur.fetchall()]
-        return render_template("parent_contact.html", classes=classes)
-    finally:
-        conn.close()
+    return render_template("parent_contact.html")
 
 
 @app.get('/api/students')
