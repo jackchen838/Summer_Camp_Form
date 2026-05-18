@@ -5,16 +5,16 @@ CREATE TABLE IF NOT EXISTS parent_contact_registrations (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
     event_year SMALLINT NOT NULL DEFAULT 2026,
+    contact_0702 BOOLEAN NOT NULL DEFAULT FALSE COMMENT '7/2（四）是否需要家長聯絡',
     contact_0703 BOOLEAN NOT NULL DEFAULT FALSE COMMENT '7/3（五）是否需要家長聯絡',
     contact_0704 BOOLEAN NOT NULL DEFAULT FALSE COMMENT '7/4（六）是否需要家長聯絡',
-    contact_0705 BOOLEAN NOT NULL DEFAULT FALSE COMMENT '7/5（日）是否需要家長聯絡',
-    note VARCHAR(1000) DEFAULT '' COMMENT '備註',
+    note VARCHAR(1000) DEFAULT '' COMMENT '聯絡對象與方式',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     UNIQUE KEY uq_student_event_year (student_id, event_year),
     INDEX idx_parent_contact_student_id (student_id),
-    INDEX idx_parent_contact_days (contact_0703, contact_0704, contact_0705),
+    INDEX idx_parent_contact_days (contact_0702, contact_0703, contact_0704),
 
     CONSTRAINT fk_parent_contact_student
         FOREIGN KEY (student_id) REFERENCES student(id)
