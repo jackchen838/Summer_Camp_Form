@@ -44,3 +44,15 @@ your-repo/
 pip install -r requirements.txt
 flask --app main run --debug
 ```
+
+## MySQL：家長聯絡登記資料表
+新增的家長聯絡登記頁會寫入 `parent_contact_registrations`，此表以 `student_id` 關聯既有的 `student(id)`，並建立學生與日期查詢用索引。可直接執行：
+
+```bash
+mysql -h <DB_HOST> -u <DB_USER> -p <DB_NAME> < sql/create_parent_contact_registrations.sql
+```
+
+主要欄位：
+- `student_id`：對應 `student.id`。
+- `contact_0703`、`contact_0704`、`contact_0705`：家長聯絡登記日期。
+- `note`：家長聯絡備註。

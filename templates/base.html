@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}佛法夏令營{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body data-page="{% block page_id %}{% endblock %}">
+  <div class="header-band"></div>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-lotus" aria-hidden="true">🪷</div>
+      <p class="header-subtitle">Dharma Summer Camp</p>
+      <h1 class="header-title">佛法夏令營<br>{% block heading %}{% endblock %}</h1>
+      <div class="header-divider" aria-hidden="true">
+        <span></span><em>☸</em><span></span>
+      </div>
+    </div>
+    <nav class="page-nav" aria-label="表單切換">
+      <a href="/" class="{% if active_page == 'medicine' %}active{% endif %}">學生用藥表單</a>
+      <a href="/parent-contact" class="{% if active_page == 'parent_contact' %}active{% endif %}">家長聯絡登記</a>
+    </nav>
+  </header>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <div class="footer-band"></div>
+  <footer class="site-footer">
+    <p class="footer-title">佛法夏令營 護持團隊</p>
+    <p>{% block footer_note %}如有緊急狀況請立即聯絡工作人員{% endblock %}</p>
+    <p>緊急聯絡：(02) 0000-0000</p>
+    <p class="footer-mantra">嗡 嘛 呢 叭 咪 吽</p>
+  </footer>
+  <script src="/static/app.js"></script>
+</body>
+</html>

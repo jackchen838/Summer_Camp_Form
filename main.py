@@ -29,7 +29,7 @@ def get_conn():
     )
 
 
-def ensure_table(conn):
+def ensure_medicine_table(conn):
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -50,6 +50,32 @@ def ensure_table(conn):
         )
 
 
+def ensure_parent_contact_table(conn):
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS parent_contact_registrations (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                student_id INT NOT NULL,
+                event_year SMALLINT NOT NULL DEFAULT 2026,
+                contact_0703 BOOLEAN NOT NULL DEFAULT FALSE,
+                contact_0704 BOOLEAN NOT NULL DEFAULT FALSE,
+                contact_0705 BOOLEAN NOT NULL DEFAULT FALSE,
+                note VARCHAR(1000) DEFAULT '',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY uq_student_event_year (student_id, event_year),
+                INDEX idx_parent_contact_student_id (student_id),
+                INDEX idx_parent_contact_days (contact_0703, contact_0704, contact_0705),
+                CONSTRAINT fk_parent_contact_student
+                    FOREIGN KEY (student_id) REFERENCES student(id)
+                    ON UPDATE CASCADE
+                    ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            """
+        )
+
+
 @app.get("/")
 def index():
     conn = get_conn()
@@ -58,6 +84,18 @@ def index():
             cur.execute("SELECT DISTINCT className FROM student ORDER BY className")
             classes = [row["className"] for row in cur.fetchall()]
         return render_template("index.html", classes=classes)
+    finally:
+        conn.close()
+
+
+@app.get('/parent-contact')
+def parent_contact():
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT DISTINCT className FROM student ORDER BY className")
+            classes = [row["className"] for row in cur.fetchall()]
+        return render_template("parent_contact.html", classes=classes)
     finally:
         conn.close()
 
@@ -112,7 +150,7 @@ def submit():
 
     conn = get_conn()
     try:
-        ensure_table(conn)
+        ensure_medicine_table(conn)
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT id FROM student WHERE id=%s AND className=%s",
@@ -151,6 +189,70 @@ def submit():
 
         conn.commit()
         return jsonify({"ok": True, "message": "提交成功"})
+    except Exception as exc:
+        conn.rollback()
+        return jsonify({"ok": False, "message": f"寫入失敗: {exc}"}), 500
+    finally:
+        conn.close()
+
+
+@app.post('/api/parent-contact')
+def submit_parent_contact():
+    payload = request.get_json(force=True)
+
+    class_name = payload.get('class_name', '').strip()
+    student_id = payload.get('student_id')
+    contact_days = set(payload.get('contact_days', []))
+    note = (payload.get('note') or '').strip()
+
+    allowed_days = {'2026-07-03', '2026-07-04', '2026-07-05'}
+    invalid_days = contact_days - allowed_days
+
+    if not class_name or not student_id:
+        return jsonify({"ok": False, "message": "班級或學生未填寫"}), 400
+
+    if invalid_days:
+        return jsonify({"ok": False, "message": "聯絡日期格式不正確"}), 400
+
+    if not contact_days:
+        return jsonify({"ok": False, "message": "請至少勾選一天聯絡日期"}), 400
+
+    conn = get_conn()
+    try:
+        ensure_parent_contact_table(conn)
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id FROM student WHERE id=%s AND className=%s",
+                (student_id, class_name),
+            )
+            student = cur.fetchone()
+            if not student:
+                conn.rollback()
+                return jsonify({"ok": False, "message": "找不到學生資料"}), 404
+
+            cur.execute(
+                """
+                INSERT INTO parent_contact_registrations
+                    (student_id, event_year, contact_0703, contact_0704, contact_0705, note)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE
+                    contact_0703=VALUES(contact_0703),
+                    contact_0704=VALUES(contact_0704),
+                    contact_0705=VALUES(contact_0705),
+                    note=VALUES(note)
+                """,
+                (
+                    student_id,
+                    2026,
+                    '2026-07-03' in contact_days,
+                    '2026-07-04' in contact_days,
+                    '2026-07-05' in contact_days,
+                    note,
+                ),
+            )
+
+        conn.commit()
+        return jsonify({"ok": True, "message": "家長聯絡登記已送出，感恩護持！"})
     except Exception as exc:
         conn.rollback()
         return jsonify({"ok": False, "message": f"寫入失敗: {exc}"}), 500
