@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS parent_contact_registrations (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    student_id INT NOT NULL,
+    student_id VARCHAR(32) NOT NULL,
     event_year SMALLINT NOT NULL DEFAULT 2026,
     contact_0702 BOOLEAN NOT NULL DEFAULT FALSE COMMENT '7/2（四）是否需要家長聯絡',
     contact_0703 BOOLEAN NOT NULL DEFAULT FALSE COMMENT '7/3（五）是否需要家長聯絡',

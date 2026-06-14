@@ -61,13 +61,31 @@ def get_conn():
     )
 
 
-def ensure_medicine_table(conn):
+def get_student_id_column_type(conn):
     with conn.cursor() as cur:
         cur.execute(
             """
+            SELECT COLUMN_TYPE
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'student'
+              AND COLUMN_NAME = 'id'
+            """
+        )
+        row = cur.fetchone()
+        if row and row["COLUMN_TYPE"]:
+            return row["COLUMN_TYPE"]
+    return "varchar(32)"
+
+
+def ensure_medicine_table(conn):
+    student_id_type = get_student_id_column_type(conn)
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
             CREATE TABLE IF NOT EXISTS student_medicine_records (
                 id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                student_id INT NOT NULL,
+                student_id {student_id_type} NOT NULL,
                 record_date DATE NOT NULL,
                 medicine_name VARCHAR(255) NOT NULL,
                 note VARCHAR(500) DEFAULT '',
@@ -80,15 +98,33 @@ def ensure_medicine_table(conn):
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
             """
         )
+        cur.execute(
+            """
+            SELECT DATA_TYPE
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'student_medicine_records'
+              AND COLUMN_NAME = 'student_id'
+            """
+        )
+        row = cur.fetchone()
+        if row and row["DATA_TYPE"] in ("int", "bigint", "mediumint", "smallint", "tinyint"):
+            cur.execute(
+                f"""
+                ALTER TABLE student_medicine_records
+                MODIFY COLUMN student_id {student_id_type} NOT NULL
+                """
+            )
 
 
 def ensure_parent_contact_table(conn):
+    student_id_type = get_student_id_column_type(conn)
     with conn.cursor() as cur:
         cur.execute(
-            """
+            f"""
             CREATE TABLE IF NOT EXISTS parent_contact_registrations (
                 id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                student_id INT NOT NULL,
+                student_id {student_id_type} NOT NULL,
                 event_year SMALLINT NOT NULL DEFAULT 2026,
                 contact_0702 BOOLEAN NOT NULL DEFAULT FALSE,
                 contact_0703 BOOLEAN NOT NULL DEFAULT FALSE,
@@ -106,6 +142,47 @@ def ensure_parent_contact_table(conn):
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             """
         )
+        cur.execute(
+            """
+            SELECT DATA_TYPE
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'parent_contact_registrations'
+              AND COLUMN_NAME = 'student_id'
+            """
+        )
+        row = cur.fetchone()
+        if row and row["DATA_TYPE"] in ("int", "bigint", "mediumint", "smallint", "tinyint"):
+            cur.execute(
+                """
+                SELECT CONSTRAINT_NAME
+                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = 'parent_contact_registrations'
+                  AND COLUMN_NAME = 'student_id'
+                  AND REFERENCED_TABLE_NAME = 'student'
+                """
+            )
+            fk = cur.fetchone()
+            if fk:
+                cur.execute(
+                    f"ALTER TABLE parent_contact_registrations DROP FOREIGN KEY `{fk['CONSTRAINT_NAME']}`"
+                )
+            cur.execute(
+                f"""
+                ALTER TABLE parent_contact_registrations
+                MODIFY COLUMN student_id {student_id_type} NOT NULL
+                """
+            )
+            cur.execute(
+                """
+                ALTER TABLE parent_contact_registrations
+                ADD CONSTRAINT fk_parent_contact_student
+                    FOREIGN KEY (student_id) REFERENCES student(id)
+                    ON UPDATE CASCADE
+                    ON DELETE CASCADE
+                """
+            )
         cur.execute(
             """
             SELECT COUNT(*) AS count
@@ -169,7 +246,7 @@ def submit():
     payload = request.get_json(force=True)
 
     class_name = normalize_class_name(payload.get('class_name', ''))
-    student_id = payload.get('student_id')
+    student_id = str(payload.get('student_id', '')).strip()
     medicines = payload.get('medicines', [])
 
     if not class_name or is_blank(student_id):
@@ -263,7 +340,7 @@ def submit_parent_contact():
     payload = request.get_json(force=True)
 
     class_name = normalize_class_name(payload.get('class_name', ''))
-    student_id = payload.get('student_id')
+    student_id = str(payload.get('student_id', '')).strip()
     contact_days = set(payload.get('contact_days', []))
     note = (payload.get('note') or '').strip()
 
