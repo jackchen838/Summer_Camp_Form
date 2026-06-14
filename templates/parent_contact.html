@@ -3,12 +3,12 @@
 {% block title %}佛法夏令營 — 家長聯絡登記{% endblock %}
 {% block page_id %}parent-contact{% endblock %}
 {% block heading %}家長聯絡登記{% endblock %}
-{% block footer_note %}請選擇 7/2～7/4 晚間 7:00～9:30 需要聯絡的日期{% endblock %}
+{% block footer_note %}請選擇 7/2～7/4 其中一天，晚間 7:00～9:30 由各班老師回電{% endblock %}
 {% block content %}
   <section class="card">
     <div class="card-header">
       <h2>填寫家長聯絡資料</h2>
-      <span class="card-hint">請先選擇班級與學生，再勾選晚間聯絡日期</span>
+      <span class="card-hint">請先選擇班級與學生，再勾選一天聯絡日期並填寫備註</span>
     </div>
 
     <div class="card-body">
@@ -17,12 +17,9 @@
           <label for="classSelect">班　級</label>
           <select id="classSelect">
             <option value="">請選擇班級</option>
-            <option value="布施">布施</option>
-            <option value="持戒">持戒</option>
-            <option value="忍辱">忍辱</option>
-            <option value="精進">精進</option>
-            <option value="禪定">禪定</option>
-            <option value="般若">般若</option>
+            {% for c in classes %}
+            <option value="{{ c }}">{{ c }}</option>
+            {% endfor %}
           </select>
         </div>
 
@@ -38,25 +35,26 @@
 
       <p class="contact-label">家長聯絡日期</p>
       <div class="contact-panel">
-        <span class="field-label">請勾選 7/2（四）～7/4（六）需要聯絡的日期；聯絡時間為晚間 7:00～9:30，由各班老師依教學段落回電。</span>
+        <span class="field-label">請勾選 7/2（四）～7/4（六）其中一天需要聯絡的日期（僅限一天）；聯絡時間為晚間 7:00～9:30，由各班老師依教學段落回電。</span>
         <div class="days-row" id="contactDays">
           <label class="day-chip">
-            <input type="checkbox" value="2026-07-02" />
+            <input type="radio" name="contactDay" value="2026-07-02" />
             <span>7/2（四）</span>
           </label>
           <label class="day-chip">
-            <input type="checkbox" value="2026-07-03" />
+            <input type="radio" name="contactDay" value="2026-07-03" />
             <span>7/3（五）</span>
           </label>
           <label class="day-chip">
-            <input type="checkbox" value="2026-07-04" />
+            <input type="radio" name="contactDay" value="2026-07-04" />
             <span>7/4（六）</span>
           </label>
         </div>
 
         <div class="field-group">
-          <label for="parentNote">聯絡對象與方式</label>
-          <textarea id="parentNote" maxlength="1000" placeholder="例如：聯絡爸爸或媽媽、撥打行動或市話；若孩子沒有記電話，請在此補充電話。"></textarea>
+          <label for="parentNote">備　註</label>
+          <span class="field-label">若有需要更多聯絡日期，請在備註欄填寫需求及日期。</span>
+          <textarea id="parentNote" maxlength="1000" placeholder="例如：聯絡爸爸或媽媽、撥打行動或市話；若孩子沒有記電話，請在此補充。若需額外聯絡日期，請註明日期與需求。"></textarea>
         </div>
       </div>
 

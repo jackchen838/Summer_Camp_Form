@@ -2,25 +2,6 @@ const page = document.body.dataset.page;
 const classSelect = document.getElementById('classSelect');
 const studentSelect = document.getElementById('studentSelect');
 const msg = document.getElementById('msg');
-const CLASS_OPTIONS = ['布施', '持戒', '忍辱', '精進', '禪定', '般若'];
-
-function populateClassOptions() {
-  if (!classSelect) return;
-
-  const selectedClass = classSelect.value;
-  classSelect.innerHTML = '<option value="">請選擇班級</option>';
-
-  CLASS_OPTIONS.forEach((className) => {
-    const option = document.createElement('option');
-    option.value = className;
-    option.textContent = className;
-    classSelect.appendChild(option);
-  });
-
-  if (CLASS_OPTIONS.includes(selectedClass)) {
-    classSelect.value = selectedClass;
-  }
-}
 
 function setMessage(text, ok) {
   if (!msg) return;
@@ -42,6 +23,8 @@ function hasClassAndStudent() {
 }
 
 async function loadStudents() {
+  if (!classSelect || !studentSelect) return;
+
   const className = classSelect.value;
   studentSelect.innerHTML = '<option value="">載入中...</option>';
   studentSelect.disabled = true;
@@ -53,7 +36,14 @@ async function loadStudents() {
 
   try {
     const res = await fetch(`/api/students?class_name=${encodeURIComponent(className)}`);
+    if (!res.ok) {
+      throw new Error('load failed');
+    }
     const students = await res.json();
+    if (!students.length) {
+      studentSelect.innerHTML = '<option value="">此班級尚無學生</option>';
+      return;
+    }
     studentSelect.innerHTML = '<option value="">請選擇學生</option>';
     students.forEach((student) => {
       const option = document.createElement('option');
@@ -67,8 +57,6 @@ async function loadStudents() {
     setMessage('學生資料載入失敗，請稍後再試', false);
   }
 }
-
-populateClassOptions();
 
 if (classSelect && studentSelect) {
   classSelect.addEventListener('change', loadStudents);
@@ -156,13 +144,16 @@ function setupParentContactPage() {
   submitBtn.addEventListener('click', async () => {
     if (!hasClassAndStudent()) return;
 
-    const selectedDays = Array.from(document.querySelectorAll('#contactDays input[type="checkbox"]:checked'))
-      .map((checkbox) => checkbox.value);
+    const selectedDay = document.querySelector('#contactDays input[type="radio"]:checked');
+    if (!selectedDay) {
+      setMessage('請勾選一天聯絡日期', false);
+      return;
+    }
 
     const payload = {
       class_name: classSelect.value,
       student_id: getSelectedStudentId(),
-      contact_days: selectedDays,
+      contact_days: [selectedDay.value],
       note: parentNote.value,
     };
 

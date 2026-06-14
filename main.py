@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import os
 import pymysql
-from datetime import date
+from datetime import date, datetime
 
 app = Flask(__name__)
 
@@ -15,8 +15,15 @@ CLASS_ORDER = ("布施", "持戒", "忍辱", "精進", "禪定", "般若")
 CLASS_ORDER_INDEX = {class_name: index for index, class_name in enumerate(CLASS_ORDER)}
 
 
+def normalize_class_name(class_name):
+    return (class_name or '').strip().strip('"')
+
+
+CLASS_NAME_SQL = "TRIM(BOTH '\"' FROM TRIM(className))"
+
+
 def class_sort_key(class_name):
-    normalized_class_name = (class_name or '').strip().strip('"')
+    normalized_class_name = normalize_class_name(class_name)
     return (
         CLASS_ORDER_INDEX.get(normalized_class_name, len(CLASS_ORDER)),
         normalized_class_name,
@@ -26,8 +33,12 @@ def class_sort_key(class_name):
 def get_class_names(conn):
     with conn.cursor() as cur:
         cur.execute("SELECT DISTINCT className FROM student")
-        classes = [row["className"] for row in cur.fetchall()]
-    return sorted(classes, key=class_sort_key)
+        classes = [
+            normalize_class_name(row["className"])
+            for row in cur.fetchall()
+            if normalize_class_name(row["className"])
+        ]
+    return sorted(set(classes), key=class_sort_key)
 
 
 def get_required_env(name):
@@ -116,17 +127,27 @@ def ensure_parent_contact_table(conn):
 
 @app.get("/")
 def index():
-    return render_template("index.html")
+    conn = get_conn()
+    try:
+        classes = get_class_names(conn)
+        return render_template("index.html", classes=classes)
+    finally:
+        conn.close()
 
 
 @app.get('/parent-contact')
 def parent_contact():
-    return render_template("parent_contact.html")
+    conn = get_conn()
+    try:
+        classes = get_class_names(conn)
+        return render_template("parent_contact.html", classes=classes)
+    finally:
+        conn.close()
 
 
 @app.get('/api/students')
 def get_students():
-    class_name = request.args.get('class_name', '').strip()
+    class_name = normalize_class_name(request.args.get('class_name', ''))
     if not class_name:
         return jsonify([])
 
@@ -134,7 +155,7 @@ def get_students():
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id, name FROM student WHERE className=%s ORDER BY name",
+                f"SELECT id, name FROM student WHERE {CLASS_NAME_SQL} = %s ORDER BY name",
                 (class_name,),
             )
             rows = cur.fetchall()
@@ -147,7 +168,7 @@ def get_students():
 def submit():
     payload = request.get_json(force=True)
 
-    class_name = payload.get('class_name', '').strip()
+    class_name = normalize_class_name(payload.get('class_name', ''))
     student_id = payload.get('student_id')
     medicines = payload.get('medicines', [])
 
@@ -177,7 +198,7 @@ def submit():
         ensure_medicine_table(conn)
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id FROM student WHERE id=%s AND className=%s",
+                f"SELECT id FROM student WHERE id=%s AND {CLASS_NAME_SQL}=%s",
                 (student_id, class_name),
             )
             student = cur.fetchone()
@@ -186,19 +207,21 @@ def submit():
                 return jsonify({"ok": False, "message": "找不到學生資料"}), 404
 
             today = date.today()
-            cur.execute(
-                "DELETE FROM student_medicine_records WHERE student_id=%s AND record_date=%s",
-                (student_id, today),
-            )
+            now_time = datetime.now().strftime('%H:%M:%S')
 
-            insert_sql = (
+            records_sql = (
                 "INSERT INTO student_medicine_records "
                 "(student_id, record_date, medicine_name, note, morning, noon, evening, bedtime) "
                 "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
             )
+            camp_sql = (
+                "INSERT INTO student_medicine "
+                "(id, morning, noon, evening, bedtime, remark, update_time) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s)"
+            )
             for med in valid_meds:
                 cur.execute(
-                    insert_sql,
+                    records_sql,
                     (
                         student_id,
                         today,
@@ -208,6 +231,21 @@ def submit():
                         med['noon'],
                         med['evening'],
                         med['bedtime'],
+                    ),
+                )
+                remark = med['name']
+                if med['note']:
+                    remark = f"{med['name']} | {med['note']}"
+                cur.execute(
+                    camp_sql,
+                    (
+                        str(student_id),
+                        str(med['morning']).lower(),
+                        str(med['noon']).lower(),
+                        str(med['evening']).lower(),
+                        str(med['bedtime']).lower(),
+                        remark,
+                        now_time,
                     ),
                 )
 
@@ -224,7 +262,7 @@ def submit():
 def submit_parent_contact():
     payload = request.get_json(force=True)
 
-    class_name = payload.get('class_name', '').strip()
+    class_name = normalize_class_name(payload.get('class_name', ''))
     student_id = payload.get('student_id')
     contact_days = set(payload.get('contact_days', []))
     note = (payload.get('note') or '').strip()
@@ -239,14 +277,17 @@ def submit_parent_contact():
         return jsonify({"ok": False, "message": "聯絡日期格式不正確"}), 400
 
     if not contact_days:
-        return jsonify({"ok": False, "message": "請至少勾選一天聯絡日期"}), 400
+        return jsonify({"ok": False, "message": "請勾選一天聯絡日期"}), 400
+
+    if len(contact_days) > 1:
+        return jsonify({"ok": False, "message": "僅能勾選一天聯絡日期"}), 400
 
     conn = get_conn()
     try:
         ensure_parent_contact_table(conn)
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id FROM student WHERE id=%s AND className=%s",
+                f"SELECT id FROM student WHERE id=%s AND {CLASS_NAME_SQL}=%s",
                 (student_id, class_name),
             )
             student = cur.fetchone()
