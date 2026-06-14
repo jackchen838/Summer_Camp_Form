@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request, jsonify
 import os
 import pymysql
-from datetime import date, datetime
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 app = Flask(__name__)
+TAIPEI = ZoneInfo('Asia/Taipei')
 
 
 def is_blank(value):
@@ -48,8 +50,20 @@ def get_required_env(name):
     return value
 
 
+def now_taipei():
+    return datetime.now(TAIPEI)
+
+
+def today_taipei():
+    return now_taipei().date()
+
+
+def naive_taipei_now():
+    return now_taipei().replace(tzinfo=None)
+
+
 def get_conn():
-    return pymysql.connect(
+    conn = pymysql.connect(
         host=get_required_env("DB_HOST"),
         port=int(os.getenv("DB_PORT", "3306")),
         user=get_required_env("DB_USER"),
@@ -59,6 +73,9 @@ def get_conn():
         cursorclass=pymysql.cursors.DictCursor,
         autocommit=False,
     )
+    with conn.cursor() as cur:
+        cur.execute("SET time_zone = '+08:00'")
+    return conn
 
 
 def get_student_id_column_type(conn):
@@ -283,13 +300,14 @@ def submit():
                 conn.rollback()
                 return jsonify({"ok": False, "message": "找不到學生資料"}), 404
 
-            today = date.today()
-            now_time = datetime.now().strftime('%H:%M:%S')
+            today = today_taipei()
+            now = naive_taipei_now()
+            now_time = now.strftime('%H:%M:%S')
 
             records_sql = (
                 "INSERT INTO student_medicine_records "
-                "(student_id, record_date, medicine_name, note, morning, noon, evening, bedtime) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+                "(student_id, record_date, medicine_name, note, morning, noon, evening, bedtime, created_at) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
             )
             camp_sql = (
                 "INSERT INTO student_medicine "
@@ -308,6 +326,7 @@ def submit():
                         med['noon'],
                         med['evening'],
                         med['bedtime'],
+                        now,
                     ),
                 )
                 remark = med['name']
@@ -372,16 +391,18 @@ def submit_parent_contact():
                 conn.rollback()
                 return jsonify({"ok": False, "message": "找不到學生資料"}), 404
 
+            now = naive_taipei_now()
             cur.execute(
                 """
                 INSERT INTO parent_contact_registrations
-                    (student_id, event_year, contact_0702, contact_0703, contact_0704, note)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                    (student_id, event_year, contact_0702, contact_0703, contact_0704, note, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 ON DUPLICATE KEY UPDATE
                     contact_0702=VALUES(contact_0702),
                     contact_0703=VALUES(contact_0703),
                     contact_0704=VALUES(contact_0704),
-                    note=VALUES(note)
+                    note=VALUES(note),
+                    updated_at=VALUES(updated_at)
                 """,
                 (
                     student_id,
@@ -390,6 +411,8 @@ def submit_parent_contact():
                     '2026-07-03' in contact_days,
                     '2026-07-04' in contact_days,
                     note,
+                    now,
+                    now,
                 ),
             )
 

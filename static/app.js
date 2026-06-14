@@ -22,6 +22,40 @@ function hasClassAndStudent() {
   return true;
 }
 
+function resetClassStudentSelectors() {
+  if (classSelect) classSelect.value = '';
+  if (studentSelect) {
+    studentSelect.innerHTML = '<option value="">請先選班級</option>';
+    studentSelect.disabled = true;
+  }
+}
+
+async function submitForm(button, url, payload, onSuccess) {
+  if (button.disabled) return;
+
+  button.disabled = true;
+  setMessage('送出中，請稍候…', true);
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      onSuccess();
+      setMessage(data.message, true);
+    } else {
+      setMessage(data.message, false);
+    }
+  } catch (error) {
+    setMessage('送出失敗，請稍後再試', false);
+  } finally {
+    button.disabled = false;
+  }
+}
+
 async function loadStudents() {
   if (!classSelect || !studentSelect) return;
 
@@ -105,6 +139,13 @@ function setupMedicinePage() {
     medicineList.appendChild(medTemplate(medCount));
   }
 
+  function resetMedicineForm() {
+    resetClassStudentSelectors();
+    medicineList.innerHTML = '';
+    medCount = 0;
+    addMedicine();
+  }
+
   addMedBtn.addEventListener('click', addMedicine);
   addMedicine();
 
@@ -117,29 +158,25 @@ function setupMedicinePage() {
       times: Array.from(item.querySelectorAll('input[type="checkbox"]:checked')).map((checkbox) => checkbox.value),
     }));
 
-    const payload = {
+    await submitForm(submitBtn, '/api/submit', {
       class_name: classSelect.value,
       student_id: getSelectedStudentId(),
       medicines: meds,
-    };
-
-    try {
-      const res = await fetch('/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      setMessage(data.message, data.ok);
-    } catch (error) {
-      setMessage('送出失敗，請稍後再試', false);
-    }
+    }, resetMedicineForm);
   });
 }
 
 function setupParentContactPage() {
   const submitBtn = document.getElementById('parentSubmitBtn');
   const parentNote = document.getElementById('parentNote');
+
+  function resetParentContactForm() {
+    resetClassStudentSelectors();
+    document.querySelectorAll('#contactDays input[type="radio"]').forEach((radio) => {
+      radio.checked = false;
+    });
+    parentNote.value = '';
+  }
 
   submitBtn.addEventListener('click', async () => {
     if (!hasClassAndStudent()) return;
@@ -150,24 +187,12 @@ function setupParentContactPage() {
       return;
     }
 
-    const payload = {
+    await submitForm(submitBtn, '/api/parent-contact', {
       class_name: classSelect.value,
       student_id: getSelectedStudentId(),
       contact_days: [selectedDay.value],
       note: parentNote.value,
-    };
-
-    try {
-      const res = await fetch('/api/parent-contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      setMessage(data.message, data.ok);
-    } catch (error) {
-      setMessage('送出失敗，請稍後再試', false);
-    }
+    }, resetParentContactForm);
   });
 }
 
