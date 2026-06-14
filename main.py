@@ -249,7 +249,7 @@ def get_students():
     try:
         with conn.cursor() as cur:
             cur.execute(
-                f"SELECT id, name FROM student WHERE {CLASS_NAME_SQL} = %s ORDER BY name",
+                f"SELECT id, name FROM student WHERE {CLASS_NAME_SQL} = %s ORDER BY id",
                 (class_name,),
             )
             rows = cur.fetchall()
