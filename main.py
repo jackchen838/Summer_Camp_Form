@@ -13,7 +13,7 @@ def is_blank(value):
 
 
 REQUIRED_DB_ENV_VARS = ("DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME")
-CLASS_ORDER = ("布施", "持戒", "忍辱", "精進", "禪定", "般若")
+CLASS_ORDER = ("布施班", "持戒班", "忍辱班", "精進班", "禪定班", "般若班")
 
 
 def normalize_class_name(class_name):
