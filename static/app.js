@@ -172,8 +172,8 @@ function setupParentContactPage() {
 
   function resetParentContactForm() {
     resetClassStudentSelectors();
-    document.querySelectorAll('#contactDays input[type="radio"]').forEach((radio) => {
-      radio.checked = false;
+    document.querySelectorAll('#contactDays input[type="checkbox"]').forEach((checkbox) => {
+      checkbox.checked = false;
     });
     parentNote.value = '';
   }
@@ -181,16 +181,18 @@ function setupParentContactPage() {
   submitBtn.addEventListener('click', async () => {
     if (!hasClassAndStudent()) return;
 
-    const selectedDay = document.querySelector('#contactDays input[type="radio"]:checked');
-    if (!selectedDay) {
-      setMessage('請勾選一天聯絡日期', false);
+    const selectedDays = Array.from(
+      document.querySelectorAll('#contactDays input[type="checkbox"]:checked'),
+    ).map((checkbox) => checkbox.value);
+    if (selectedDays.length === 0) {
+      setMessage('請至少勾選一天聯絡日期', false);
       return;
     }
 
     await submitForm(submitBtn, '/api/parent-contact', {
       class_name: classSelect.value,
       student_id: getSelectedStudentId(),
-      contact_days: [selectedDay.value],
+      contact_days: selectedDays,
       note: parentNote.value,
     }, resetParentContactForm);
   });

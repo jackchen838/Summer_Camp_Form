@@ -347,10 +347,7 @@ def submit_parent_contact():
         return jsonify({"ok": False, "message": "聯絡日期格式不正確"}), 400
 
     if not contact_days:
-        return jsonify({"ok": False, "message": "請勾選一天聯絡日期"}), 400
-
-    if len(contact_days) > 1:
-        return jsonify({"ok": False, "message": "僅能勾選一天聯絡日期"}), 400
+        return jsonify({"ok": False, "message": "請至少勾選一天聯絡日期"}), 400
 
     conn = get_conn()
     try:

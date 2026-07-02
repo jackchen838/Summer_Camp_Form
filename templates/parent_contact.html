@@ -3,12 +3,12 @@
 {% block title %}佛法夏令營 — 家長聯絡登記{% endblock %}
 {% block page_id %}parent-contact{% endblock %}
 {% block heading %}家長聯絡登記{% endblock %}
-{% block footer_note %}請選擇 7/2～7/4 其中一天，晚間 7:00～9:30 由各班老師回電{% endblock %}
+{% block footer_note %}請勾選 7/2～7/4 需要聯絡的日期（可複選），晚間 7:00～9:30 由各班老師回電{% endblock %}
 {% block content %}
   <section class="card">
     <div class="card-header">
       <h2>填寫家長聯絡資料</h2>
-      <span class="card-hint">請先選擇班級與學生，再勾選一天聯絡日期並填寫備註</span>
+      <span class="card-hint">請先選擇班級與學生，再勾選聯絡日期並填寫備註</span>
     </div>
 
     <div class="card-body">
@@ -35,18 +35,18 @@
 
       <p class="contact-label">家長聯絡日期</p>
       <div class="contact-panel">
-        <span class="field-label">請勾選 7/2（四）～7/4（六）其中一天需要聯絡的日期（僅限一天）；聯絡時間為晚間 7:00～9:30，由各班老師依教學段落回電。</span>
+        <span class="field-label">請勾選 7/2（四）～7/4（六）需要聯絡的日期（可複選）；聯絡時間為晚間 7:00～9:30，由各班老師依教學段落回電。</span>
         <div class="days-row" id="contactDays">
           <label class="day-chip">
-            <input type="radio" name="contactDay" value="2026-07-02" />
+            <input type="checkbox" name="contactDay" value="2026-07-02" />
             <span>7/2（四）</span>
           </label>
           <label class="day-chip">
-            <input type="radio" name="contactDay" value="2026-07-03" />
+            <input type="checkbox" name="contactDay" value="2026-07-03" />
             <span>7/3（五）</span>
           </label>
           <label class="day-chip">
-            <input type="radio" name="contactDay" value="2026-07-04" />
+            <input type="checkbox" name="contactDay" value="2026-07-04" />
             <span>7/4（六）</span>
           </label>
         </div>
